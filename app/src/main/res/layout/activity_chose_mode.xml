@@ -34,6 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="200dp"
             android:background="@color/colorAccent"
+            android:onClick="goToPassengerSignIn"
             android:text="I'm Passenger"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -44,6 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
             android:background="@color/colorAccent"
+            android:onClick="goToDriverSignIn"
             android:text="I'm Driver"
             android:textSize="20sp"
             android:textStyle="bold" />
