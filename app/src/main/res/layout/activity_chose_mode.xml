@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SplashScreenActivity">
+    tools:context=".ChoseModeActivity">
 
     <ImageView
         android:layout_width="match_parent"
@@ -14,7 +14,8 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         android:padding="16dp">
 
         <TextView
@@ -26,5 +27,26 @@
             android:textColor="@color/colorAccent"
             android:textSize="80sp"
             android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/passengerBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="200dp"
+            android:background="@color/colorAccent"
+            android:text="I'm Passenger"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/driverBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:background="@color/colorAccent"
+            android:text="I'm Driver"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 </FrameLayout>
