@@ -19,7 +19,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class DriverSignInActivity extends AppCompatActivity {
 
-    private static final String TAG = "DriverSignInActivity.AUTH";
+    private static final String TAG = "DriverSignInActivity";
 
     private TextInputLayout textInputEmailTIL,
             textInputNameTIL,
@@ -129,6 +129,21 @@ public class DriverSignInActivity extends AppCompatActivity {
         signUp(userEmail, userPass);
     }
 
+    public void toggleLoginSignUp(View view) {
+        isLoginMode = !isLoginMode;
+
+        if (isLoginMode) {
+            loginSignInBtn.setText("Login");
+            toggleLoginSignUpTV.setText("Tap to Sign In");
+            textInputConfirmPassTIL.setVisibility(View.GONE);
+            return;
+        }
+
+        loginSignInBtn.setText("Sign Up");
+        toggleLoginSignUpTV.setText("Tap to Login");
+        textInputConfirmPassTIL.setVisibility(View.VISIBLE);
+    }
+
     private void signUp(String userEmail, String userPass) {
         auth.createUserWithEmailAndPassword(userEmail, userPass)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -161,20 +176,5 @@ public class DriverSignInActivity extends AppCompatActivity {
                         }
                     }
                 });
-    }
-
-    public void toggleLoginSignUp(View view) {
-        isLoginMode = !isLoginMode;
-
-        if (isLoginMode) {
-            loginSignInBtn.setText("Login");
-            toggleLoginSignUpTV.setText("Tap to Sign In");
-            textInputConfirmPassTIL.setVisibility(View.GONE);
-            return;
-        }
-
-        loginSignInBtn.setText("Sign Up");
-        toggleLoginSignUpTV.setText("Tap to Login");
-        textInputConfirmPassTIL.setVisibility(View.VISIBLE);
     }
 }
