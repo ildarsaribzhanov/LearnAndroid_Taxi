@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
@@ -40,6 +41,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -56,12 +58,30 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     private LocationSettingsRequest locationSettingsRequest;
     private LocationCallback locationCallback;
     private Location currentLocation;
-    private String locationUpdatesTime;
+
+    private Button settingsBtn, signOutBtn;
+
+    private FirebaseAuth auth;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_maps);
+
+        auth = FirebaseAuth.getInstance();
+        currentUser = auth.getCurrentUser();
+
+        settingsBtn = findViewById(R.id.driverSettingsBtn);
+        signOutBtn = findViewById(R.id.driverSignOutBtn);
+
+        signOutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signOutDriver();
+            }
+        });
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -75,6 +95,22 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         buildLocationSettingsRequest();
 
         startLocationUpdates();
+    }
+
+    private void signOutDriver() {
+        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference().child("drivers");
+
+        GeoFire geoFire = new GeoFire(drivers);
+
+        geoFire.removeLocation(currentUser.getUid());
+
+        auth.signOut();
+
+        Intent intent = new Intent(DriverMapsActivity.this, ChoseModeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        startActivity(intent);
+        finish();
     }
 
     private void buildLocationRequest() {
@@ -247,14 +283,13 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
 
-        String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference drivers = FirebaseDatabase.getInstance().getReference()
                 .child("drivers");
 
         GeoFire geoFire = new GeoFire(drivers);
 
-        geoFire.setLocation(driverId,
-                new GeoLocation(currentLocation.getLatitude(),currentLocation.getLongitude()));
+        geoFire.setLocation(currentUser.getUid(),
+                new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()));
     }
 
     private void showSnackBar(final String mainText, final String action, View.OnClickListener listener) {
