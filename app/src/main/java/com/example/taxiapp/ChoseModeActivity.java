@@ -16,7 +16,7 @@ public class ChoseModeActivity extends AppCompatActivity {
 
     public void goToPassengerSignIn(View view) {
         startActivity(new Intent(ChoseModeActivity.this,
-                PassangerSignInActivity.class));
+                PassengerSignInActivity.class));
     }
 
     public void goToDriverSignIn(View view) {
