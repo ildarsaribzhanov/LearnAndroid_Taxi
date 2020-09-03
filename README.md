@@ -1,4 +1,6 @@
-Use
+# Test app
+
+Use:
 
 - Firebase Auth
 - Firebase DataBase
