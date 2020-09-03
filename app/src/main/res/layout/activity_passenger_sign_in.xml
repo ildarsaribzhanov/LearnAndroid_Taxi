@@ -8,6 +8,15 @@
     android:padding="16dp"
     tools:context=".PassengerSignInActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Passenger Sign In"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputEmail"
         android:layout_width="match_parent"
@@ -71,8 +80,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="200dp"
         android:background="@color/colorAccent"
-        android:text="Sign Up"
         android:onClick="loginSignUp"
+        android:text="Sign Up"
         android:textSize="20sp"
         android:textStyle="bold" />
 
