@@ -1,5 +1,6 @@
 package com.example.taxiapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -9,9 +10,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class DriverSignInActivity extends AppCompatActivity {
+
+    private static final String TAG = "DriverSignInActivity.AUTH";
 
     private TextInputLayout textInputEmailTIL,
             textInputNameTIL,
@@ -19,6 +27,8 @@ public class DriverSignInActivity extends AppCompatActivity {
             textInputConfirmPassTIL;
     private Button loginSignInBtn;
     private TextView toggleLoginSignUpTV;
+
+    private FirebaseAuth auth;
 
     Boolean isLoginMode = false;
 
@@ -28,6 +38,8 @@ public class DriverSignInActivity extends AppCompatActivity {
         setContentView(R.layout.activity_driver_sign_in);
 
         bind();
+
+        auth = FirebaseAuth.getInstance();
     }
 
     private void bind() {
@@ -87,7 +99,7 @@ public class DriverSignInActivity extends AppCompatActivity {
             return false;
         }
 
-        if (!passVal.equals(passConfirmVal)) {
+        if (!isLoginMode && !passVal.equals(passConfirmVal)) {
             textInputPassTIL.setError("Password must be equal confirm value");
             return false;
         }
@@ -106,10 +118,49 @@ public class DriverSignInActivity extends AppCompatActivity {
             return;
         }
 
-        String userInput = "Email: " + textInputEmailTIL.getEditText().getText().toString().trim()
-                + "\nName: " + textInputNameTIL.getEditText().getText().toString().trim()
-                + "\nPass: " + textInputPassTIL.getEditText().getText().toString().trim();
-        Toast.makeText(this, userInput, Toast.LENGTH_LONG).show();
+        String userEmail = textInputEmailTIL.getEditText().getText().toString().toLowerCase().trim();
+        String userPass = textInputPassTIL.getEditText().getText().toString().toLowerCase().trim();
+
+        if (isLoginMode) {
+            logIn(userEmail, userPass);
+            return;
+        }
+
+        signUp(userEmail, userPass);
+    }
+
+    private void signUp(String userEmail, String userPass) {
+        auth.createUserWithEmailAndPassword(userEmail, userPass)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "createUserWithEmail:success");
+                            FirebaseUser user = auth.getCurrentUser();
+                        } else {
+                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(DriverSignInActivity.this,
+                                    "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void logIn(String userEmail, String userPass) {
+        auth.signInWithEmailAndPassword(userEmail, userPass)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "signInWithEmail:success");
+                            FirebaseUser user = auth.getCurrentUser();
+                        } else {
+                            Log.w(TAG, "signInWithEmail:failure", task.getException());
+                            Toast.makeText(DriverSignInActivity.this,
+                                    "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     public void toggleLoginSignUp(View view) {
