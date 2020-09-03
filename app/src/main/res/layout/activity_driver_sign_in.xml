@@ -69,9 +69,10 @@
         android:id="@+id/loginSignInBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="400dp"
+        android:layout_marginTop="200dp"
         android:background="@color/colorAccent"
         android:text="Sign Up"
+        android:onClick="loginSignUp"
         android:textSize="20sp"
         android:textStyle="bold" />
 
@@ -82,6 +83,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp"
         android:clickable="true"
+        android:onClick="toggleLoginSignUp"
         android:text="Tap to login"
         android:textSize="20sp"
         android:textStyle="bold" />
