@@ -20,6 +20,8 @@ public class DriverSignInActivity extends AppCompatActivity {
     private Button loginSignInBtn;
     private TextView toggleLoginSignUpTV;
 
+    Boolean isLoginMode = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,6 +113,17 @@ public class DriverSignInActivity extends AppCompatActivity {
     }
 
     public void toggleLoginSignUp(View view) {
+        isLoginMode = !isLoginMode;
 
+        if (isLoginMode) {
+            loginSignInBtn.setText("Login");
+            toggleLoginSignUpTV.setText("Tap to Sign In");
+            textInputConfirmPassTIL.setVisibility(View.GONE);
+            return;
+        }
+
+        loginSignInBtn.setText("Sign Up");
+        toggleLoginSignUpTV.setText("Tap to Login");
+        textInputConfirmPassTIL.setVisibility(View.VISIBLE);
     }
 }
