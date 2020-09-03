@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -37,6 +39,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -235,11 +240,21 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         if (currentLocation == null) {
             return;
         }
+
         LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
         mMap.clear();
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
         mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(12));
+
+        String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference()
+                .child("drivers");
+
+        GeoFire geoFire = new GeoFire(drivers);
+
+        geoFire.setLocation(driverId,
+                new GeoLocation(currentLocation.getLatitude(),currentLocation.getLongitude()));
     }
 
     private void showSnackBar(final String mainText, final String action, View.OnClickListener listener) {
