@@ -3,6 +3,7 @@ package com.example.taxiapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -152,6 +153,7 @@ public class DriverSignInActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "createUserWithEmail:success");
                             FirebaseUser user = auth.getCurrentUser();
+                            moveToMap();
                         } else {
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
                             Toast.makeText(DriverSignInActivity.this,
@@ -169,6 +171,7 @@ public class DriverSignInActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "signInWithEmail:success");
                             FirebaseUser user = auth.getCurrentUser();
+                            moveToMap();
                         } else {
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
                             Toast.makeText(DriverSignInActivity.this,
@@ -176,5 +179,9 @@ public class DriverSignInActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    private void moveToMap() {
+        startActivity(new Intent(DriverSignInActivity.this, DriverMapsActivity.class));
     }
 }
