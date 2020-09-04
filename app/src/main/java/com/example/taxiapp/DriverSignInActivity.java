@@ -31,7 +31,7 @@ public class DriverSignInActivity extends AppCompatActivity {
 
     private FirebaseAuth auth;
 
-    Boolean isLoginMode = false;
+    private Boolean isLoginMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
