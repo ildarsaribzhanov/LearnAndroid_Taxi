@@ -43,7 +43,7 @@ public class DriverSignInActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
 
         if (auth.getCurrentUser() != null) {
-            startActivity(new Intent(DriverSignInActivity.this, DriverMapsActivity.class));
+            moveToMap();
         }
     }
 
