@@ -45,7 +45,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class PassengerMapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
@@ -63,6 +63,8 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
     private FirebaseAuth auth;
     private FirebaseUser currentUser;
+
+    GeoFire geoFireStorage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,18 +97,18 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         buildLocationSettingsRequest();
 
         startLocationUpdates();
+
+        DatabaseReference passengers = FirebaseDatabase.getInstance().getReference().child("passengers");
+
+        geoFireStorage = new GeoFire(passengers);
     }
 
     private void signOutDriver() {
-        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference().child("drivers");
-
-        GeoFire geoFire = new GeoFire(drivers);
-
-        geoFire.removeLocation(currentUser.getUid());
+        geoFireStorage.removeLocation(currentUser.getUid());
 
         auth.signOut();
 
-        Intent intent = new Intent(DriverMapsActivity.this, ChoseModeActivity.class);
+        Intent intent = new Intent(PassengerMapsActivity.this, ChoseModeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         startActivity(intent);
@@ -139,15 +141,6 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         locationSettingsRequest = builder.build();
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -165,12 +158,12 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             case CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Log.d("DriverMapsActivity", "User has agreed toi change location settings");
+                        Log.d("PassengerMapsActivity", "User has agreed toi change location settings");
                         startLocationUpdates();
                         break;
 
                     case Activity.RESULT_CANCELED:
-                        Log.d("DriverMapsActivity", "User has NOT agreed toi change location settings");
+                        Log.d("PassengerMapsActivity", "User has NOT agreed toi change location settings");
                         updateLocationUi(currentLocation);
                         break;
 
@@ -205,17 +198,11 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
             @Override
             public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                if (ActivityCompat.checkSelfPermission(DriverMapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(DriverMapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+                if (ActivityCompat.checkSelfPermission(PassengerMapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(PassengerMapsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
+
                 fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.myLooper());
 
                 updateLocationUi(currentLocation);
@@ -231,7 +218,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
                         try {
                             ResolvableApiException resolvableApiException = (ResolvableApiException) e;
                             resolvableApiException.startResolutionForResult(
-                                    DriverMapsActivity.this,
+                                    PassengerMapsActivity.this,
                                     CHECK_SETTINGS
                             );
                         } catch (IntentSender.SendIntentException sie) {
@@ -242,7 +229,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
                     case LocationSettingsStatusCodes
                             .SETTINGS_CHANGE_UNAVAILABLE:
                         String msg = "Adjust location settings on device";
-                        Toast.makeText(DriverMapsActivity.this, msg, Toast.LENGTH_LONG).show();
+                        Toast.makeText(PassengerMapsActivity.this, msg, Toast.LENGTH_LONG).show();
                         updateLocationUi(currentLocation);
                 }
             }
@@ -256,7 +243,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             showSnackBar("Location permissions need set", "OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ActivityCompat.requestPermissions(DriverMapsActivity.this,
+                    ActivityCompat.requestPermissions(PassengerMapsActivity.this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                             REQUEST_LOCATION_PERMISSION);
                 }
@@ -266,7 +253,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         }
 
         ActivityCompat.requestPermissions(
-                DriverMapsActivity.this,
+                PassengerMapsActivity.this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 REQUEST_LOCATION_PERMISSION);
     }
@@ -283,12 +270,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
-        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference()
-                .child("drivers");
-
-        GeoFire geoFire = new GeoFire(drivers);
-
-        geoFire.setLocation(currentUser.getUid(),
+        geoFireStorage.setLocation(currentUser.getUid(),
                 new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()));
     }
 
