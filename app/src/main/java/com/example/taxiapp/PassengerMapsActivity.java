@@ -20,6 +20,8 @@ import android.widget.Toast;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -42,6 +44,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -59,12 +62,16 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
     private LocationCallback locationCallback;
     private Location currentLocation;
 
-    private Button settingsBtn, signOutBtn;
+    private Button settingsBtn, signOutBtn, bookTaxiBtn;
 
     private FirebaseAuth auth;
     private FirebaseUser currentUser;
 
-    GeoFire geoFireStorage;
+    private int searchRadius = 1;
+    private boolean isDriverFound = false;
+    private String nearestDriverId;
+
+    GeoFire geoFirePassengersStorage, geoFireDriverStorage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,11 +83,20 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
 
         settingsBtn = findViewById(R.id.driverSettingsBtn);
         signOutBtn = findViewById(R.id.driverSignOutBtn);
+        bookTaxiBtn = findViewById(R.id.bookTaxiBtn);
 
         signOutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 signOutDriver();
+            }
+        });
+
+        bookTaxiBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bookTaxiBtn.setText("Getting Taxi...");
+                gettingNearestTaxi();
             }
         });
 
@@ -98,13 +114,65 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
 
         startLocationUpdates();
 
-        DatabaseReference passengers = FirebaseDatabase.getInstance().getReference().child("passengers");
+        initStorage();
+    }
 
-        geoFireStorage = new GeoFire(passengers);
+    private void initStorage() {
+        DatabaseReference passengers = FirebaseDatabase.getInstance().getReference().child("passengers");
+        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference().child("drivers");
+
+        geoFirePassengersStorage = new GeoFire(passengers);
+        geoFireDriverStorage = new GeoFire(drivers);
+    }
+
+    private void gettingNearestTaxi() {
+        GeoQuery geoQuery = geoFireDriverStorage.queryAtLocation(
+                new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()),
+                searchRadius
+        );
+
+        geoQuery.removeAllListeners();
+
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                if (isDriverFound) {
+                    return;
+                }
+
+                isDriverFound = true;
+                nearestDriverId = key;
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                if (isDriverFound) {
+                    return;
+                }
+
+                searchRadius++;
+                gettingNearestTaxi();
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
     }
 
     private void signOutDriver() {
-        geoFireStorage.removeLocation(currentUser.getUid());
+        geoFirePassengersStorage.removeLocation(currentUser.getUid());
 
         auth.signOut();
 
@@ -270,7 +338,7 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
         mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
-        geoFireStorage.setLocation(currentUser.getUid(),
+        geoFirePassengersStorage.setLocation(currentUser.getUid(),
                 new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()));
     }
 
