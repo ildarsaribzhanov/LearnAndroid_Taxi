@@ -69,7 +69,7 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_maps);
+        setContentView(R.layout.activity_passenger_maps);
 
         auth = FirebaseAuth.getInstance();
         currentUser = auth.getCurrentUser();
