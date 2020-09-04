@@ -41,6 +41,10 @@ public class PassengerSignInActivity extends AppCompatActivity {
         bind();
 
         auth = FirebaseAuth.getInstance();
+
+        if (auth.getCurrentUser() != null) {
+            startActivity(new Intent(PassengerSignInActivity.this, PassengerMapsActivity.class));
+        }
     }
 
     private void bind() {

@@ -41,6 +41,10 @@ public class DriverSignInActivity extends AppCompatActivity {
         bind();
 
         auth = FirebaseAuth.getInstance();
+
+        if (auth.getCurrentUser() != null) {
+            startActivity(new Intent(DriverSignInActivity.this, DriverMapsActivity.class));
+        }
     }
 
     private void bind() {
