@@ -38,15 +38,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.List;
 
 public class PassengerMapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -73,10 +78,16 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
 
     GeoFire geoFirePassengersStorage, geoFireDriverStorage;
 
+    DatabaseReference passengerInfoStorage, passengersLocationStorage, driversLocationStorage;
+
+    private Marker currentUserMarker, taxiMarker;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_passenger_maps);
+
+        initStorage();
 
         auth = FirebaseAuth.getInstance();
         currentUser = auth.getCurrentUser();
@@ -113,16 +124,17 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
         buildLocationSettingsRequest();
 
         startLocationUpdates();
-
-        initStorage();
     }
 
     private void initStorage() {
-        DatabaseReference passengers = FirebaseDatabase.getInstance().getReference().child("passengers");
-        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference().child("drivers");
+        passengerInfoStorage = FirebaseDatabase.getInstance().getReference().child("passengersInfo");
+        passengerInfoStorage.setValue(true);
 
-        geoFirePassengersStorage = new GeoFire(passengers);
-        geoFireDriverStorage = new GeoFire(drivers);
+        passengersLocationStorage = FirebaseDatabase.getInstance().getReference().child("passengersGeoFire");
+        driversLocationStorage = FirebaseDatabase.getInstance().getReference().child("driversGeoFire");
+
+        geoFirePassengersStorage = new GeoFire(passengersLocationStorage);
+        geoFireDriverStorage = new GeoFire(driversLocationStorage);
     }
 
     private void gettingNearestTaxi() {
@@ -142,6 +154,8 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
 
                 isDriverFound = true;
                 nearestDriverId = key;
+
+                gettingNearestTaxiLocation();
             }
 
             @Override
@@ -166,6 +180,50 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
 
             @Override
             public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void gettingNearestTaxiLocation() {
+        bookTaxiBtn.setText("Getting Taxi Location...");
+
+        driversLocationStorage.child(nearestDriverId).child("l").addValueEventListener(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    return;
+                }
+
+                List<Object> taxiLocationVal = (List<Object>) snapshot.getValue();
+
+                double latitude = 0;
+                double longitude = 0;
+
+                if (taxiLocationVal.get(0) != null && taxiLocationVal.get(1) != null) {
+                    latitude = Double.parseDouble(taxiLocationVal.get(0).toString());
+                    longitude = Double.parseDouble(taxiLocationVal.get(1).toString());
+                }
+
+                LatLng taxiLatLngLocation = new LatLng(latitude, longitude);
+                Location taxiLocation = new Location("");
+                taxiLocation.setLatitude(latitude);
+                taxiLocation.setLongitude(longitude);
+
+                float distance = currentLocation.distanceTo(taxiLocation);
+
+                bookTaxiBtn.setText("Distance to Taxi: " + distance);
+
+                if (taxiMarker != null) {
+                    taxiMarker.remove();
+                }
+
+                taxiMarker = mMap.addMarker(new MarkerOptions().position(taxiLatLngLocation).title("Your Taxi"));
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
 
             }
         });
@@ -212,11 +270,6 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        LatLng driverLocation = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(driverLocation));
     }
 
     @Override
@@ -333,9 +386,13 @@ public class PassengerMapsActivity extends FragmentActivity implements OnMapRead
         }
 
         LatLng currentLatLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        mMap.clear();
+
+        if (currentUserMarker != null) {
+            currentUserMarker.remove();
+        }
+
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLatLng));
-        mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
+        currentUserMarker = mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
         geoFirePassengersStorage.setLocation(currentUser.getUid(),

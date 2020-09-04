@@ -64,10 +64,15 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     private FirebaseAuth auth;
     private FirebaseUser currentUser;
 
+    private GeoFire geoFireDriverStorage;
+    private DatabaseReference driverInfoStorage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_maps);
+
+        initStorage();
 
         auth = FirebaseAuth.getInstance();
         currentUser = auth.getCurrentUser();
@@ -97,12 +102,16 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         startLocationUpdates();
     }
 
+    private void initStorage() {
+        driverInfoStorage = FirebaseDatabase.getInstance().getReference().child("driversInfo");
+        driverInfoStorage.setValue(true);
+        DatabaseReference driversGeoFire = FirebaseDatabase.getInstance().getReference().child("driversGeoFire");
+
+        geoFireDriverStorage = new GeoFire(driversGeoFire);
+    }
+
     private void signOutDriver() {
-        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference().child("drivers");
-
-        GeoFire geoFire = new GeoFire(drivers);
-
-        geoFire.removeLocation(currentUser.getUid());
+        geoFireDriverStorage.removeLocation(currentUser.getUid());
 
         auth.signOut();
 
@@ -283,12 +292,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         mMap.addMarker(new MarkerOptions().position(currentLatLng).title("Your location"));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(14));
 
-        DatabaseReference drivers = FirebaseDatabase.getInstance().getReference()
-                .child("drivers");
-
-        GeoFire geoFire = new GeoFire(drivers);
-
-        geoFire.setLocation(currentUser.getUid(),
+        geoFireDriverStorage.setLocation(currentUser.getUid(),
                 new GeoLocation(currentLocation.getLatitude(), currentLocation.getLongitude()));
     }
 
